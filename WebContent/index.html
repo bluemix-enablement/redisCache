@@ -1,0 +1,137 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Java Web Starter</title>
+<link rel='stylesheet' href='css/style.css' />
+<script language="javascript" type="text/javascript">
+	function load() {
+		sendRequest('all');
+		document.getElementById('get').addEventListener("click", getClicked, false);
+		document.getElementById('put').addEventListener("click", putClicked, false);
+		document.getElementById('delete').addEventListener("click", deleteClicked, false);
+	}
+
+	function inputKey() {
+		document.getElementById('echo').innerHTML = "";
+		sendRequest('all');
+	}
+	
+	function hasInputKey() {
+		var key = document.getElementById('key').value;
+		if(key == ''){
+			document.getElementById('echo').innerHTML = 'Please input key.';
+			document.getElementById('key').focus();
+			return false;
+		}
+		return true;
+	}
+
+	function sendRequest(operation) {
+		var ajaxRequest;
+		var key = encodeURIComponent(document.getElementById('key').value);
+		var value = encodeURIComponent(document.getElementById('value').value);
+		var encrypt = encodeURIComponent(document.getElementById('encrypt').checked);
+
+		ajaxRequest = new XMLHttpRequest();
+		ajaxRequest.onreadystatechange = function() {
+			if (ajaxRequest.readyState == 4 && ajaxRequest.status == 200) {
+				var result = ajaxRequest.responseText;
+				if (operation == 'all') {
+					var resHTML = '<tr></tr>';
+					var allECacheObj = JSON.parse(ajaxRequest.responseText);
+					if (allECacheObj && allECacheObj.length
+							&& allECacheObj.length > 0) {
+						resHTML = '';
+						for ( var i = 0; i < allECacheObj.length; i++) {
+							resHTML += '<tr><td>' + allECacheObj[i]['key'] + '</td><td>' + allECacheObj[i]['value'] + '</td></tr>';
+						}
+					}
+					document.getElementById('res').innerHTML = resHTML;
+				} else {
+					document.getElementById('echo').innerHTML = "";
+					if (operation == "get") {
+						if (result == 'null') {
+							document.getElementById('echo').innerHTML = "No entry is found."
+							document.getElementById('key').value = "";
+							document.getElementById('value').value = "";
+						} else {
+							document.getElementById('value').value = result;
+							document.getElementById('echo').innerHTML = "The value for key "+key+" was retrieved successfully.";
+						}
+					} else {
+						if (operation == "delete") {
+							document.getElementById('key').value = "";
+							document.getElementById('value').value = "";
+						}
+						document.getElementById('echo').innerHTML = result;
+					}
+					sendRequest('all');
+				}
+			}
+		}
+
+		ajaxRequest.open("GET", "/ecaas?operation=" + operation + "&key=" + key + "&value=" + value +"&encrypt="+encrypt, true);
+		ajaxRequest.send(null);
+	}
+
+	function getClicked() {
+		if(hasInputKey())
+			sendRequest('get');
+	}
+	function putClicked() {
+		if(hasInputKey())
+			sendRequest('put');
+	}
+	function deleteClicked() {
+		if(hasInputKey())
+			sendRequest('delete');
+	}
+</script>
+</head>
+<body onload="load();">
+	<h1>
+		Welcome to the <span class="blue">Java Web Starter</span> on Bluemix!
+	</h1>
+	<br />
+	<div class = "description">This sample demonstrates how to use the Java Native API to access the <span class = "blue">Data Cache</span> service. </div>
+	<br />
+	<div class="container" style="color: black">
+		<h2>Grid Operations:</h2>
+		<br />
+		<form class="form-horizontal" style="width: 800px">
+			<div class="form-group">
+				<label for="key">Key:</label> 
+				<input id="key" class="form-control" type='text' name='key' placeholder="Input key" />
+			</div>
+			<div class="form-group">
+				<label for="value">Value: </label> 
+				<input id='value' class="form-control" type="text" name='value' />
+				<!--  <div>-->
+				<input id="encrypt" type="checkbox" value="1" class="chk">Encrypt
+				<!-- </div>-->
+			</div>
+		</form>
+		<div id='echo' class="messageInfo"></div>
+		
+		<div class="buttonContainer">
+			<button class="btn btn-primary" id='get'>Get</button>
+			<button class="btn btn-primary" id='put'>Put</button>
+			<button class="btn btn-primary" id='delete'>Delete</button>
+		</div>
+		<br />
+		<h2>Grid Entries:</h2>
+		<table class='table-striped clearfix'>
+			<thead>
+				<th><h5>Key</h5></th>
+				<th><h5>Value</h5></th>
+			</thead>
+			<tfoot>
+			</tfoot>
+			<tbody id="res">
+				<tr></tr>
+			</tbody>
+		</table>
+	</div>
+</body>
+</html>
